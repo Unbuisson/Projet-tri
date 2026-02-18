@@ -1,0 +1,53 @@
+{
+    "interface" :{
+        "largeur_interface" : 300,
+        "hauteur_interface" : 600
+    },
+
+    "chargement" : {
+        "largeur_chargement" : 800,
+        "hauteur_chargement" : 400
+    },
+
+    "fenetre" : {
+        "dimension" : {
+            "largeur_fenetre" : 1300,
+            "hauteur_fenetre" : 900
+        },
+
+        "dimension_graphe" : {
+            "marge_gauche" : 110,
+            "marge_droite" : 990,
+            "marge_haute" : 50,
+            "marge_basse" : 800
+        },
+
+        "graduation" : {
+            "espace_vertical" : 50,
+            "espace_horizontal" : 40
+        },
+
+        "legende" : {
+            "espace_vertical" : 30,
+            "espace_horizontal" : 100
+        },
+
+        "couleur" : {
+            "couleur_axes" : "black",
+            "couleur_grille" : "lightgrey",
+            "couleur_texte_repere" : "red",
+            "couleur_fond_graphes" : "ivory"
+        }
+    },
+
+    "CSV" : {
+        "chemin_dossier" : "CSV",
+        "separateur_CSV" : ";"
+    },
+
+    "valeur" : {
+        "valeur_max_tab" : 20000,
+        "limite_recursion" : 5000,
+        "temps_theorique_operation" : 2.2e-07
+    }
+}

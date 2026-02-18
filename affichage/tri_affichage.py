@@ -3,7 +3,7 @@ import time
 import os
 import sys
 
-sys.setrecursionlimit(200000)
+sys.setrecursionlimit(5000)
 
 class Tri_Affichage:
     def __init__(self):
@@ -12,7 +12,12 @@ class Tri_Affichage:
         self.temps = 0
         self.supr = 0
         self.visualisation = False
-        self.nom_tri = ["tri bogo","tri Staline","tri a bulle", "tri par selection", "tri cocktail", "tri rapide", " tri fusion", "tri pair impair", "tri par insertion", "tri par tas"]
+        self.nom_tri = [
+    "tri bogo","tri Staline","tri a bulle", "tri par selection",
+    "tri cocktail", "tri rapide", "tri fusion", "tri pair impair",
+    "tri par insertion", "tri par tas",
+    "tri de shell", "tri par denombrement", "tri par seaux"
+    ]
 
     def getNom_Tri(self) :
         return self.nom_tri
@@ -28,9 +33,21 @@ class Tri_Affichage:
     def effectuer_tri(self,choix = int, affichage = bool, tableau = list) :
         self.reset_compteurs()
         self.visualisation = False
-        dic = { 1 : self.tri_bogo, 2 : self.tri_staline, 3 : self.tri_a_bulle,
-                4 : self.tri_par_selection, 5 : self.tri_cocktail, 6 : self.tri_rapide,
-                7 : self.tri_fusion, 8 : self.tri_pair_impair, 9 : self.tri_par_insertion, 10 : self.tri_par_tas}
+        dic = {
+            1 : self.tri_bogo,
+            2 : self.tri_staline,
+            3 : self.tri_a_bulle,
+            4 : self.tri_par_selection,
+            5 : self.tri_cocktail,
+            6 : self.tri_rapide,
+            7 : self.tri_fusion,
+            8 : self.tri_pair_impair,
+            9 : self.tri_par_insertion,
+            10 : self.tri_par_tas,
+            11 : self.tri_de_shell,
+            12 : self.tri_par_denombrement,
+            13 : self.tri_par_seaux
+        }
         if affichage :
             tab = list(tableau)
         self.temps = time.time()
@@ -79,6 +96,9 @@ class Tri_Affichage:
         print("      8 - tri pair impair (odd-even sort)")
         print("      9 - tri par insertion")
         print("      10 - tri par tas (heap sort)")
+        print("      11 - tri de shell")
+        print("      12 - tri par dénombrement")
+        print("      13 - tri par seaux")
         choix = int(input("Votre choix: "))
         print("Combien d'élément voulez vous ?")
         nombre_element = int(input("Saississez un nombre positif : "))
@@ -134,7 +154,7 @@ class Tri_Affichage:
             print()
 
         #time.sleep(0.1) # Pause introduisant le temps non-algorithmique
-        #input()
+        input()
         print("\n")
         print('\033[0m')
 
@@ -451,6 +471,116 @@ class Tri_Affichage:
         self._tri_fusion_recursif(tableau, 0, len(tableau) - 1)
         self.afficher_tableau(tableau, f"Tri Fusion - Terminé")
         return tableau
+
+
+    def tri_de_shell(self, tableau):
+        n = len(tableau)
+        gap = n // 2
+
+        while gap > 0:
+            for i in range(gap, n):
+                self.elements_parcourus += 1
+                temp = tableau[i]
+                j = i
+
+                while j >= gap:
+                    self.elements_parcourus += 1
+                    if tableau[j - gap] > temp:
+                        tableau[j] = tableau[j - gap]
+                        self.operations += 1
+                        j -= gap
+                        self.afficher_tableau(tableau, "Tri de Shell", j, j-gap)
+                    else:
+                        break
+
+                tableau[j] = temp
+                self.operations += 1
+
+            gap //= 2
+
+        self.afficher_tableau(tableau, "Tri de Shell - Terminé")
+        return tableau
+    
+    def tri_par_denombrement(self, tableau):
+        if len(tableau) == 0:
+            return tableau
+
+        min_val = min(tableau)
+        max_val = max(tableau)
+
+        plage = max_val - min_val + 1
+        compteur = [0] * plage
+
+        # Comptage
+        for val in tableau:
+            self.elements_parcourus += 1
+            compteur[val - min_val] += 1
+            self.operations += 1
+
+        index = 0
+
+        # Reconstruction
+        for i in range(plage):
+            while compteur[i] > 0:
+                self.elements_parcourus += 1
+                tableau[index] = i + min_val
+                self.operations += 1
+                compteur[i] -= 1
+                index += 1
+                self.afficher_tableau(tableau, "Tri par Dénombrement", index-1)
+
+        self.afficher_tableau(tableau, "Tri par Dénombrement - Terminé")
+        return tableau
+    
+
+
+    def tri_par_seaux(self, tableau):
+        if len(tableau) == 0:
+            return tableau
+
+        min_val = min(tableau)
+        max_val = max(tableau)
+        n = len(tableau)
+
+        buckets = [[] for _ in range(n)]
+
+        # Répartition
+        for val in tableau:
+            self.elements_parcourus += 1
+            index = int((val - min_val) / (max_val - min_val + 1) * n)
+            buckets[index].append(val)
+            self.operations += 1
+
+        index = 0
+
+        # Tri insertion dans chaque seau
+        for bucket in buckets:
+            for i in range(1, len(bucket)):
+                key = bucket[i]
+                j = i - 1
+
+                while j >= 0:
+                    self.elements_parcourus += 1
+                    if bucket[j] > key:
+                        bucket[j+1] = bucket[j]
+                        self.operations += 1
+                        j -= 1
+                    else:
+                        break
+
+                bucket[j+1] = key
+                self.operations += 1
+
+            # Remise dans le tableau principal
+            for val in bucket:
+                tableau[index] = val
+                self.operations += 1
+                self.afficher_tableau(tableau, "Tri par Seaux", index)
+                index += 1
+
+        self.afficher_tableau(tableau, "Tri par Seaux - Terminé")
+        return tableau
+
 
 if __name__ == "__main__" :
     t = Tri_Affichage()
