@@ -212,14 +212,27 @@ class Courbe :
           tableau_ligne = [ [ [] for _ in range(len(canvases)) ]for _ in range(len(self.tab)) ]
           for alg_index in range(len(self.tab)):
                precedents = [(MARGE_GAUCHE, MARGE_BASSE) for _ in metrics]
-               for resultat in self.tab[alg_index]:
-                    x = MARGE_GAUCHE + (resultat.taille - self.taille_min_tableau) / self.taille_par_pixel
-                    for graphe, parametre in enumerate(metrics):
-                         y = MARGE_BASSE - getattr(resultat, parametre["value_attr"]) / getattr(self, parametre["par_pixel"]) 
-                         ligne = canvases[graphe].create_line(precedents[graphe][0], precedents[graphe][1], x, y, fill=self.tab[alg_index][0].couleur)
-                         tableau_ligne[alg_index][graphe].append(ligne)
-                         precedents[graphe] = (x, y)
-
+               if self.verif_nombre_point : 
+                    for resultat in self.tab[alg_index]:
+                         x = MARGE_GAUCHE + (resultat.taille - self.taille_min_tableau) / self.taille_par_pixel
+                         for graphe, parametre in enumerate(metrics):
+                              y = MARGE_BASSE - getattr(resultat, parametre["value_attr"]) / getattr(self, parametre["par_pixel"]) 
+                              ligne = canvases[graphe].create_line(precedents[graphe][0], precedents[graphe][1], x, y, fill=self.tab[alg_index][0].couleur)
+                              tableau_ligne[alg_index][graphe].append(ligne)
+                              precedents[graphe] = (x, y)
+               else :
+                    i = 0
+                    while i < len(self.tab[alg_index]) -self.nombre_parcourir :
+                         x = MARGE_GAUCHE + (self.tab[alg_index][i].taille - self.taille_min_tableau) / self.taille_par_pixel
+                         for graphe, parametre in enumerate(metrics):
+                              y = 0 
+                              for j in range(i,i+self.nombre_parcourir) :
+                                   y += MARGE_BASSE - getattr(self.tab[alg_index][j], parametre["value_attr"]) / getattr(self, parametre["par_pixel"]) 
+                              y /= self.nombre_parcourir
+                              ligne = canvases[graphe].create_line(precedents[graphe][0], precedents[graphe][1], x, int(y), fill=self.tab[alg_index][0].couleur)
+                              tableau_ligne[alg_index][graphe].append(ligne)
+                              precedents[graphe] = (x, int(y))
+                         i += self.nombre_parcourir
 
           # Tracer des courbes théoriques (repères) en une seule passe
           precs = [[(MARGE_GAUCHE, MARGE_BASSE) for _ in range(3)]for _  in range(len(metrics))]
@@ -286,6 +299,11 @@ class Courbe :
      
      def calcul(self) :
           """Fonction effectuant les calculs nécessaire au tracé du graphe"""
+          if ( (MARGE_DROITE - MARGE_GAUCHE) / len(self.tab[0]) < NOMBRE_PIXEL_ECART_MINIMUM  ) :
+               self.verif_nombre_point = False
+               self.nombre_parcourir = int(NOMBRE_PIXEL_ECART_MINIMUM / ((MARGE_DROITE-MARGE_GAUCHE) / len(self.tab[0]) ))
+          else :
+               self.verif_nombre_point = True
           self.temps = 0
           self.echange = 0
           self.comparaison = 0

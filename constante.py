@@ -47,3 +47,6 @@ with open('config.json', 'r') as f:
     # Fenêtre de chargement
     LARGEUR_CHARGEMENT = config["chargement"]["largeur_chargement"]
     HAUTEUR_CHARGEMENT = config["chargement"]["hauteur_chargement"]
+
+    # Lissage 
+    NOMBRE_PIXEL_ECART_MINIMUM = config["valeur"]["nombre_minimale_pixel_ecart"]
