@@ -156,8 +156,22 @@ class Courbe :
                canvases[1].pack()
                canvases[2].pack_forget()
 
+          def changer_visibilite_ligne() :
+               tableau_choix = [i for i, var in enumerate(tableau_affichage) if var.get() == 1]
+               max = len(self.tab)
+               for i in range(max) :
+                    if i in tableau_choix :
+                         for canva in range (len(tableau_ligne[i])):
+                              for ligne in tableau_ligne[i][canva] : 
+                                   canvases[canva].itemconfig(ligne, state="normal")
+                    else :
+                         for canva in range (len(tableau_ligne[i])):
+                              for ligne in tableau_ligne[i][canva] : 
+                                   canvases[canva].itemconfig(ligne, state="hidden")
+
           """Fonction en charge du tracer du graphe"""
           fenetre_graphe = tkinter.Tk()
+          fenetre_graphe.title("Graphiques")
           fenetre_graphe.minsize(self.largeur,self.hauteur)
           fenetre_graphe.maxsize(self.largeur,self.hauteur)
           self.calcul()
@@ -169,10 +183,11 @@ class Courbe :
                {"key": "echange", "title": "Nombre echange", "value_attr": "echanges", "par_pixel": "echange_par_pixel", "decimals": 0, "unit": ""},
           ]
 
+          frame_tout = tkinter.Frame(fenetre_graphe,width=self.largeur,height=self.hauteur)
           # Création des canevas
           canvases : list[tkinter.Canvas]= []
           for m in metrics:
-               c = tkinter.Canvas(fenetre_graphe, width=self.largeur, height=self.hauteur, bg=COULEUR_FOND_GRAPHE)
+               c = tkinter.Canvas(frame_tout, width=MARGE_DROITE+30, height=self.hauteur, bg=COULEUR_FOND_GRAPHE)
                c.create_text(MARGE_GAUCHE, MARGE_HAUTE-20, text=m["title"], fill=COULEUR_TEXTE_REPERE)
                c.create_text(MARGE_DROITE+50, MARGE_BASSE, text="Taille du tableau", fill=COULEUR_TEXTE_REPERE)
                c.create_line(MARGE_GAUCHE, MARGE_HAUTE, MARGE_GAUCHE, MARGE_BASSE, width=2, fill=COULEUR_AXES)
@@ -194,20 +209,15 @@ class Courbe :
                     canvas.create_line(i, MARGE_HAUTE, i, MARGE_BASSE, width=1, fill=COULEUR_GRILLE)
                     canvas.create_text(i, MARGE_BASSE+20, text=str(int(self.taille_min_tableau + self.taille_par_pixel*(i-MARGE_GAUCHE))))
 
-
+          tableau_ligne = [ [ [] for _ in range(len(canvases)) ]for _ in range(len(self.tab)) ]
           for alg_index in range(len(self.tab)):
-               # légendes pour chaque canevas
-               for canvas in canvases:
-                    canvas.create_text(MARGE_DROITE+ESPACEMENT_HORIZONTALE_LEGENDE, ESPACEMENT_VERTICAL_LEGENDE*alg_index+MARGE_HAUTE, text=self.tab[alg_index][0].nom + " : ")
-                    canvas.create_line(MARGE_DROITE+ESPACEMENT_HORIZONTALE_LEGENDE+50, ESPACEMENT_VERTICAL_LEGENDE*alg_index+MARGE_HAUTE, MARGE_DROITE+ESPACEMENT_HORIZONTALE_LEGENDE+80, ESPACEMENT_VERTICAL_LEGENDE*alg_index+MARGE_HAUTE, width=2, fill=self.tab[alg_index][0].couleur)
-
-               # tracer des courbes pour cet algorithme sur tous les canevas
                precedents = [(MARGE_GAUCHE, MARGE_BASSE) for _ in metrics]
                for resultat in self.tab[alg_index]:
                     x = MARGE_GAUCHE + (resultat.taille - self.taille_min_tableau) / self.taille_par_pixel
                     for graphe, parametre in enumerate(metrics):
                          y = MARGE_BASSE - getattr(resultat, parametre["value_attr"]) / getattr(self, parametre["par_pixel"]) 
-                         canvases[graphe].create_line(precedents[graphe][0], precedents[graphe][1], x, y, fill=self.tab[alg_index][0].couleur)
+                         ligne = canvases[graphe].create_line(precedents[graphe][0], precedents[graphe][1], x, y, fill=self.tab[alg_index][0].couleur)
+                         tableau_ligne[alg_index][graphe].append(ligne)
                          precedents[graphe] = (x, y)
 
 
@@ -243,6 +253,12 @@ class Courbe :
                          canvases[j].create_line(precs[j][2][0], precs[j][2][1], x, y)
                          precs[j][2] = (x, y)
           
+          frame_legend = tkinter.Frame(frame_tout,width=self.largeur - MARGE_DROITE, height=self.hauteur)
+          tableau_affichage = []
+          for algo in range(len(self.tab)) : 
+               var = tkinter.IntVar(value=1)
+               tableau_affichage.append(var)
+               tkinter.Checkbutton(frame_legend,text=self.tab[algo][0].nom + " : ―― ",fg=self.tab[algo][0].couleur,variable=var, command=changer_visibilite_ligne).pack(anchor="nw")
 
 
           for j in range(len(metrics)) :
@@ -254,12 +270,14 @@ class Courbe :
           # Option radio pour changer d'affichage
           option = tkinter.IntVar(value=1)
           frame_options = tkinter.Frame(fenetre_graphe)
-          frame_options.pack()
           tkinter.Radiobutton(frame_options, text='Temps', variable=option, value=1, command=afficher_temps).pack(side='left')
           tkinter.Radiobutton(frame_options, text='Echange', variable=option, value=2, command=afficher_echange).pack(side='left')
           tkinter.Radiobutton(frame_options, text='Comparaison', variable=option, value=3, command=afficher_comparaison).pack(side='left')
           # affichage initial
-          canvases[0].pack()
+          frame_options.pack(anchor="n")
+          canvases[0].pack(side="left")
+          frame_legend.pack(side="right")
+          frame_tout.pack(anchor="w")
           fenetre_graphe.mainloop()
           return 0
 
