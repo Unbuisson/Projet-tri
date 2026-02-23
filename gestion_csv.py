@@ -1,7 +1,7 @@
 import csv
-import tri
 import os
 from constante import *
+from tri import TriResultat
 
 class Gestion_CSV() :
     def __init__(self):
@@ -18,7 +18,7 @@ class Gestion_CSV() :
             fichier.close()
 
         
-    def ajouter_donnee_csv(self,tableau : list[list[tri.TriResultat]] ) :
+    def ajouter_donnee_csv(self,tableau : list[list[TriResultat]] ) :
         """Prend la liste des tris effectué et ajoute dans les fichiers correspondant les réultats"""
         for tab in tableau :
             if ( not os.path.exists(self.chemin(tab[0].nom))) :
@@ -45,10 +45,10 @@ class Gestion_CSV() :
                 scribe.writerow(tab)
             fichier.close() 
 
-    def recuperer_donnee_csv(self,nom : str,min : int,max : int ,intervalle : int ) ->list[tri.TriResultat] :
+    def recuperer_donnee_csv(self,nom : str,min : int,max : int ,intervalle : int ) ->list[TriResultat] :
         """Récupère les données du fichier dans et les renvoie au format utilisable"""
         self.trier_csv(nom)
-        tableau_moyenne : list[tri.TriResultat] = []
+        tableau_moyenne : list[TriResultat] = []
 
         # Ouverture du fichier
         with open(self.chemin(nom),'r') as fichier :
@@ -56,7 +56,7 @@ class Gestion_CSV() :
             donnees = list(lecteur)
             taille_cible = min
             compteur = 0 
-            resultat_temporaire = tri.TriResultat("temp",0,0,0,0,"red")
+            resultat_temporaire = TriResultat("temp",0,0,0,0,"red")
             i = 1
 
             # Convertion du format tableau au format TriResultat
@@ -78,7 +78,7 @@ class Gestion_CSV() :
                         resultat_temporaire.echanges /= compteur
                         tableau_moyenne.append(resultat_temporaire)
                         taille_cible += intervalle
-                        resultat_temporaire = tri.TriResultat("temp",0,0,0,0,"red")
+                        resultat_temporaire = TriResultat("temp",0,0,0,0,"red")
                         compteur = 0 
                     i += 1
                     while i < len(donnees) and float(donnees[i][1]) > taille_cible :

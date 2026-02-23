@@ -49,6 +49,6 @@
         "valeur_max_tab" : 20000,
         "limite_recursion" : 5000,
         "temps_theorique_operation" : 2.2e-07,
-        "nombre_minimale_pixel_ecart" : 20
+        "nombre_minimale_pixel_ecart" : 1
     }
 }
