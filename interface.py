@@ -18,7 +18,7 @@ class Interface :
 
 
     def lancer_tri(self, tableau_choix: list[int], mini: int, maxi: int, intervalle: int): 
-        """Fonction en charge de lancer les tris en parrallele"""
+        """Fonction en charge de lancer les tris en parallele"""
         tableau_process : list[multiprocessing.Process] = []
         tableau_a_trier : list[list[int]] = []
         fenetre_chargement = tkinter.Tk()
@@ -28,7 +28,7 @@ class Interface :
         affichage_pourcentage = canvas.create_text(LARGEUR_CHARGEMENT/2-20,HAUTEUR_CHARGEMENT/2,text="0%",fill="white",width=90)
         canvas.pack()
         donnees = multiprocessing.Queue()
-        self.nb_tri_effectue = multiprocessing.Queue()
+        nb_tri_effectue = multiprocessing.Queue()
         compteur = 0
         nb_tri_a_effectue = len(range(mini, maxi + 1, intervalle)) * len(tableau_choix)
         # Génère les tableaux pour que les tris travaille sur des tableaux identiques
@@ -37,12 +37,12 @@ class Interface :
 
         # Création et lancement des process et parallèle
         for j in range(len(tableau_choix)):
-            process = multiprocessing.Process(target=self.lancer_tri_parrallele, args=(tableau_choix[j],donnees,tableau_a_trier))
+            process = multiprocessing.Process(target=self.lancer_tri_parallele, args=(tableau_choix[j],donnees,tableau_a_trier,nb_tri_effectue))
             tableau_process.append(process)
             process.start()
 
         while compteur < nb_tri_a_effectue :
-            compteur += self.nb_tri_effectue.get()
+            compteur += nb_tri_effectue.get()
             pourcentage = (compteur/nb_tri_a_effectue)*100
             canvas.itemconfig(affichage_pourcentage,text=str(int(pourcentage))+ "%",width=90)
             fenetre_chargement.update()
@@ -58,16 +58,16 @@ class Interface :
             p.join()
 
         self.gcsv.ajouter_donnee_csv(self.tab)
-        Courbe(self.tab)
+        self.courbe = Courbe(self.tab)
 
 
-    def lancer_tri_parrallele(self,choix : int, donnee : multiprocessing.Queue, tableau_tri : list[list[int]]) : 
+    def lancer_tri_parallele(self,choix : int, donnee : multiprocessing.Queue, tableau_tri : list[list[int]],nb_tri_effectue : multiprocessing.Queue) : 
         """Création d"instance unique pour chaque tri"""
         trie_process = Tri()
         resultat :list[TriResultat] = []
         for tab in tableau_tri :
             resultat.append(trie_process.executer(choix,tab))
-            self.nb_tri_effectue.put(1)
+            nb_tri_effectue.put(1)
         donnee.put(resultat)
      
 
@@ -75,7 +75,7 @@ class Interface :
         """Récupère les données stocker en CSV, et les mets au bon format dans self.tab"""
         for choix in tableau_choix :
             self.tab.append(self.gcsv.recuperer_donnee_csv(self.t.algorithmes[choix][0],mini,maxi,intervalle))
-        Courbe(self.tab)
+        self.courbe = Courbe(self.tab)
      
     def lancer(self):
         """Interface de selection des tris"""

@@ -2,21 +2,28 @@ import tkinter
 from tri import TriResultat
 import math
 from constante import * 
+from dataclasses import dataclass
 
+@dataclass
+class StockLigne : 
+     num_algo : int
+     num_canva : int
+     liste_ligne : list
+     etat_affichage : bool
+     etat_epaisseur : bool
 
 class Courbe :
      def __init__(self, tableau : list[list[TriResultat]]):
           self.largeur = LARGEUR_FENETRE
           self.hauteur = HAUTEUR_FENETRE
-          self.tab : list[list[TriResultat]] = tableau
+          self.tableau_resultat : list[list[TriResultat]] = tableau
           self.metrics : list[dict] = [
                {"key": "temps", "title": "Temps (s)", "value_attr": "temps", "par_pixel": "temps_par_pixel", "decimals": 3, "unit": "s"},
                {"key": "comparaison", "title": "Nombre comparaison", "value_attr": "comparaisons", "par_pixel": "comparaison_par_pixel", "decimals": 0, "unit": ""},
                {"key": "echange", "title": "Nombre echange", "value_attr": "echanges", "par_pixel": "echange_par_pixel", "decimals": 0, "unit": ""},
           ]
           self.canvas = []
-          self.tableau_ligne = []
-          self.tableau_ligne_affiche = []
+          self.tableau_ligne : list[StockLigne] = []
           self.tableau_ligne_surligne = []
           self.main_boucle()
 
@@ -25,7 +32,7 @@ class Courbe :
           for m in self.metrics:
                c = tkinter.Canvas(fenetre, width=MARGE_DROITE+30, height=self.hauteur, bg=COULEUR_FOND_GRAPHE)
                c.create_text(MARGE_GAUCHE, MARGE_HAUTE-20, text=m["title"], fill=COULEUR_TEXTE_REPERE)
-               c.create_text(MARGE_DROITE+50, MARGE_BASSE, text="Taille du tableau", fill=COULEUR_TEXTE_REPERE)
+               c.create_text(MARGE_DROITE, MARGE_BASSE+40, text="Taille du tableau", fill=COULEUR_TEXTE_REPERE)
                c.create_line(MARGE_GAUCHE, MARGE_HAUTE, MARGE_GAUCHE, MARGE_BASSE, width=2, fill=COULEUR_AXES)
                c.create_line(MARGE_GAUCHE, MARGE_BASSE, MARGE_DROITE, MARGE_BASSE, width=2, fill=COULEUR_AXES)
                self.canvas.append(c)
@@ -47,27 +54,36 @@ class Courbe :
                     canvas.create_text(i, MARGE_BASSE+20, text=str(int(self.taille_min_tableau + self.taille_par_pixel*(i-MARGE_GAUCHE))))
 
      def tracer_courbe(self) :
-          self.tableau_ligne = [ [ [] for _ in range(len(self.canvas)) ]for _ in range(len(self.tab)) ]
-          for alg_index in range(len(self.tab)):
-               precedents = [(MARGE_GAUCHE, MARGE_BASSE) for _ in self.metrics]
-               i = 0
-               while i < len(self.tab[alg_index]) -self.nombre_parcourir :
-                    x = MARGE_GAUCHE + (self.tab[alg_index][i].taille - self.taille_min_tableau) / self.taille_par_pixel
-                    for graphe, parametre in enumerate(self.metrics):
-                         y = 0 
+          for alg_index in range(len(self.tableau_resultat)) :
+               for graphe, parametre in enumerate(self.metrics):
+                    tableau_ligne_temporaire : list[int] = []
+                    precedents = (MARGE_GAUCHE, MARGE_BASSE)
+                    i = 0
+                    while i < len(self.tableau_resultat[alg_index]) - self.nombre_parcourir :
+                         y = 0
+                         x = MARGE_GAUCHE + int( (self.tableau_resultat[alg_index][i].taille-self.taille_min_tableau ) / self.taille_par_pixel)
                          for j in range(i,i+self.nombre_parcourir) :
-                              y += MARGE_BASSE - getattr(self.tab[alg_index][j], parametre["value_attr"]) / getattr(self, parametre["par_pixel"]) 
-                         y /= self.nombre_parcourir
-                         ligne = self.canvas[graphe].create_line(precedents[graphe][0], precedents[graphe][1], x, int(y), fill=self.tab[alg_index][0].couleur,width=1)
-                         self.tableau_ligne[alg_index][graphe].append(ligne)
-                         precedents[graphe] = (x, int(y))
-                    i += self.nombre_parcourir
-     
+                              y += MARGE_BASSE - getattr(self.tableau_resultat[alg_index][j], parametre["value_attr"]) / getattr(self, parametre["par_pixel"])
+                         y = int(y / self.nombre_parcourir)
+                         ligne = self.canvas[graphe].create_line(precedents[0], precedents[1], x, y, fill=self.tableau_resultat[alg_index][0].couleur,width=1)
+                         tableau_ligne_temporaire.append(ligne)
+                         precedents = (x, y)
+                         i += self.nombre_parcourir
+                    y = 0
+                    x = MARGE_GAUCHE + int( (self.tableau_resultat[alg_index][-1].taille-self.taille_min_tableau ) / self.taille_par_pixel)
+                    for j in range(i,len(self.tableau_resultat[alg_index])) : 
+                         y += MARGE_BASSE - getattr(self.tableau_resultat[alg_index][j], parametre["value_attr"]) / getattr(self, parametre["par_pixel"])
+                    y = int( y/ (len(self.tableau_resultat[alg_index]) - i  ) )
+                    ligne = self.canvas[graphe].create_line(precedents[0], precedents[1], x, y, fill=self.tableau_resultat[alg_index][0].couleur,width=1)
+                    tableau_ligne_temporaire.append(ligne)   
+                    self.tableau_ligne.append(StockLigne(num_algo=alg_index,num_canva=graphe,liste_ligne=tableau_ligne_temporaire,etat_affichage=True,etat_epaisseur=False))
+
+
      def tracer_courbe_repere(self) : 
      # Tracer des courbes théoriques (repères) en une seule passe
           precs = [[(MARGE_GAUCHE, MARGE_BASSE) for _ in range(3)]for _  in range(len(self.metrics))]
 
-          for i in range(int(self.tab[0][0].taille), int(self.tab[0][-1].taille),int(self.tab[0][1].taille-self.tab[0][0].taille)):
+          for i in range(int(self.tableau_resultat[0][0].taille), int(self.tableau_resultat[0][-1].taille),int(self.tableau_resultat[0][1].taille-self.tableau_resultat[0][0].taille)):
                x = MARGE_GAUCHE + (i - self.taille_min_tableau) / self.taille_par_pixel
 
                y = MARGE_BASSE -(i * TEMPS_THEORIQUE_OPERATION) /self.temps_par_pixel
@@ -106,13 +122,16 @@ class Courbe :
      def ecrire_legende(self,fenetre) :
           tableau_affichage = []
           tableau_epaisseur = []
-          for algo in range(len(self.tab)) : 
+          tkinter.Label(fenetre,text="Suligner/Visibilité").pack(anchor="nw")
+          for algo in range(len(self.tableau_resultat)) :
+               frame_temp = tkinter.Frame(fenetre,width=self.largeur - MARGE_DROITE, height=20)
                visibilite = tkinter.IntVar(value=1)
-               epaisseur = tkinter.IntVar(value=1)
+               epaisseur = tkinter.IntVar(value=0)
                tableau_affichage.append(visibilite)
                tableau_epaisseur.append(epaisseur)
-               tkinter.Checkbutton(fenetre,text=self.tab[algo][0].nom + " : ―― ",fg=self.tab[algo][0].couleur,variable=visibilite, command=lambda: self.changer_visibilite_ligne(tableau_affichage)).pack(anchor="w")
-               tkinter.Checkbutton(fenetre,variable=epaisseur, command=lambda: self.changer_epaisseur(tableau_epaisseur)).pack(anchor="nw")
+               tkinter.Checkbutton(frame_temp,text=self.tableau_resultat[algo][0].nom + " : ―― ",fg=self.tableau_resultat[algo][0].couleur,variable=visibilite, command=lambda: self.changer_visibilite_ligne(tableau_affichage)).pack(side="right")
+               tkinter.Checkbutton(frame_temp,variable=epaisseur,text="    ", command=lambda: self.changer_epaisseur(tableau_epaisseur)).pack(side="left")
+               frame_temp.pack(anchor="nw")
 
      def bouton_changer_affichage(self,fenetre) :
           option = tkinter.IntVar(value=0)
@@ -122,42 +141,38 @@ class Courbe :
 
      def changer_visibilite_ligne(self,tableau_affichage) :
           tableau_choix = [i for i, var in enumerate(tableau_affichage) if var.get() == 1]
-          max = len(self.tab)
-          for i in range(max) :
-               if i in tableau_choix :
-                    if self.tableau_ligne_affiche[i] == True : 
+          for stockligne in self.tableau_ligne :
+               if stockligne.num_algo in tableau_choix :
+                    if stockligne.etat_affichage == True :
                          continue
-                    self.tableau_ligne_affiche[i] = True
-                    for canva in range (len(self.tableau_ligne[i])):
-                         for ligne in self.tableau_ligne[i][canva] : 
-                              self.canvas[canva].itemconfig(ligne, state="normal")
+                    stockligne.etat_affichage = True
+                    for ligne in stockligne.liste_ligne : 
+                         self.canvas[stockligne.num_canva].itemconfig(ligne,state="normal")
                else :
-                    if self.tableau_ligne_affiche[i] == False : 
+                    if stockligne.etat_affichage == False :
                          continue
-                    self.tableau_ligne_affiche[i] = False
-                    for canva in range (len(self.tableau_ligne[i])):
-                         for ligne in self.tableau_ligne[i][canva] : 
-                              self.canvas[canva].itemconfig(ligne, state="hidden")
+                    stockligne.etat_affichage = False 
+                    for ligne in stockligne.liste_ligne : 
+                         self.canvas[stockligne.num_canva].itemconfig(ligne,state="hidden")      
      
 
      def changer_epaisseur(self,tableau_epaisseur) : 
           tableau_choix = [i for i, var in enumerate(tableau_epaisseur) if var.get() == 1]
-          max = len(self.tab)
-          for i in range(max) :
-               if i in tableau_choix :
-                    if self.tableau_ligne_surligne[i] == True : 
+          for stockligne in self.tableau_ligne :
+               if stockligne.num_algo in tableau_choix :
+                    if stockligne.etat_epaisseur == True :
                          continue
-                    self.tableau_ligne_surligne[i] = True
-                    for canva in range (len(self.tableau_ligne[i])):
-                         for ligne in self.tableau_ligne[i][canva] : 
-                              self.canvas[canva].itemconfig(ligne, width=4)
+                    stockligne.etat_epaisseur = True
+                    for ligne in stockligne.liste_ligne : 
+                         self.canvas[stockligne.num_canva].itemconfig(ligne,width=6)
                else :
-                    if self.tableau_ligne_surligne[i] == False : 
+                    if stockligne.etat_epaisseur == False :
                          continue
-                    self.tableau_ligne_surligne[i] = False
-                    for canva in range (len(self.tableau_ligne[i])):
-                         for ligne in self.tableau_ligne[i][canva] : 
-                              self.canvas[canva].itemconfig(ligne, width=1)
+                    stockligne.etat_epaisseur = False 
+                    for ligne in stockligne.liste_ligne : 
+                         self.canvas[stockligne.num_canva].itemconfig(ligne,width=1) 
+
+
 
      def changer_affichage(self,choix : int) :
           for i in range(len(self.canvas)) :
@@ -166,6 +181,29 @@ class Courbe :
                else :
                     self.canvas[i].pack_forget()  
 
+     def bouton_config(self,fenetre) :
+          def executer_changement() :
+               try :
+                    nouvelle_valeur_lissage = int(valeur_lissage.get())
+                    if nouvelle_valeur_lissage < 0 or nouvelle_valeur_lissage > 100 :
+                         print("Valeur invalide")
+               except ValueError :
+                    print("Entier exigé")
+               self.supprimer_courbe()
+               self.tableau_ligne = []
+               self.calcul_lissage(nouvelle_valeur_lissage)
+               self.tracer_courbe()
+               
+          tkinter.Label(fenetre,text="Lissage (0-100)").pack(anchor="nw")
+          valeur_lissage = tkinter.Entry(fenetre)
+          valeur_lissage.pack(anchor="nw")
+          tkinter.Button(fenetre,text="changer",command=executer_changement).pack()
+     
+     def supprimer_courbe(self) : 
+          for courbe in self.tableau_ligne :
+               for ligne in courbe.liste_ligne :
+                    self.canvas[courbe.num_canva].itemconfig(ligne,state="hidden")
+
      def main_boucle(self) :
           # Initialisation du graphe
           fenetre_graphe = tkinter.Tk()
@@ -173,24 +211,23 @@ class Courbe :
           fenetre_graphe.minsize(self.largeur,self.hauteur)
           fenetre_graphe.maxsize(self.largeur,self.hauteur)
           self.calcul_permanent()
-          self.calcul_temp()
+          self.calcul_lissage(20)
           frame_graphe_legend = tkinter.Frame(fenetre_graphe,width=self.largeur,height=self.hauteur)
-          frame_legend = tkinter.Frame(frame_graphe_legend,width=self.largeur - MARGE_DROITE, height=int(self.hauteur/2))
-          frame_option = tkinter.Frame(fenetre_graphe)
+          frame_legend = tkinter.Frame(frame_graphe_legend,width=self.largeur - MARGE_DROITE, height=self.hauteur)
+          frame_choix_canva = tkinter.Frame(fenetre_graphe)
           self.tracer_canvas(frame_graphe_legend)
           self.tracer_repere()
           self.tracer_courbe()
           self.tracer_courbe_repere()
           self.ecrire_legende(frame_legend)
-          self.bouton_changer_affichage(frame_option)
+          self.bouton_changer_affichage(frame_choix_canva)
+          self.bouton_config(frame_legend)
 
-          # affichage initial
-          self.tableau_ligne_affiche = [True for _ in range(len(self.tab))]
-          self.tableau_ligne_surligne = [True for _ in range(len(self.tab))]
+          self.tableau_ligne_surligne = [False for _ in range(len(self.tableau_resultat))]
 
 
           self.changer_affichage(0)
-          frame_option.pack(anchor="n")
+          frame_choix_canva.pack(anchor="n")
           frame_graphe_legend.pack(anchor="w")
           frame_legend.pack(side="right",anchor="n")
           fenetre_graphe.mainloop()
@@ -204,9 +241,9 @@ class Courbe :
           self.temps = 0
           self.echange = 0
           self.comparaison = 0
-          self.taille_min_tableau = self.tab[0][0].taille
-          self.taille_max_tableau = self.tab[0][0].taille
-          for tableau in self.tab :
+          self.taille_min_tableau = self.tableau_resultat[0][0].taille
+          self.taille_max_tableau = self.tableau_resultat[0][0].taille
+          for tableau in self.tableau_resultat :
                self.temps = max(max(tab.temps for tab in tableau),self.temps)
                self.echange = max(max(tab.echanges for tab in tableau),self.echange)
                self.comparaison = max(max(tab.comparaisons for tab in tableau),self.comparaison)
@@ -217,9 +254,9 @@ class Courbe :
           self.echange_par_pixel = self.echange / (MARGE_BASSE-MARGE_HAUTE)
           self.taille_par_pixel = (self.taille_max_tableau - self.taille_min_tableau) / (MARGE_DROITE-MARGE_GAUCHE)
 
-     def calcul_temp(self) :
-          if ( (MARGE_DROITE - MARGE_GAUCHE) / len(self.tab[0]) < NOMBRE_PIXEL_ECART_MINIMUM  ) :
-               self.nombre_parcourir = int(NOMBRE_PIXEL_ECART_MINIMUM / ((MARGE_DROITE-MARGE_GAUCHE) / len(self.tab[0]) ))
+     def calcul_lissage(self,ecart : int) :
+          if ( (MARGE_DROITE - MARGE_GAUCHE) / len(self.tableau_resultat[0]) < ecart  ) :
+               self.nombre_parcourir = int(ecart / ((MARGE_DROITE-MARGE_GAUCHE) / len(self.tableau_resultat[0]) ))
           else :
                self.nombre_parcourir = 1
      
