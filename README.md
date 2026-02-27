@@ -7,10 +7,12 @@ Actuellement 12 algorithmes de tris sont implémentés.
 * Choix entre 12 algorithmes de compléxité allant de O(n²) ( tri à bulle ) à O (n) ( tri par dénombrement ) 
 * Calcul effectué en parallèle grace au multiprocessing 
 * Représentation graphique des résultats avec comparaison aux courbes théoriques en O(n²), O(nlogn) et O (n)
+* Choix de la comparaison (temps/echange/nombre de comparaison)
+* Possiblité de caché/ affiché des courbes avec une option pour épaissir les courbes aux besoins
 * Résultat stocké dans une dataclass
 * Sauvegarde dans des fichiers CSV, pour pouvoir faire de tests sur une plus grande échelle plus rapidement et plus précisement
-<img width="1204" height="875" alt="image" src="https://github.com/user-attachments/assets/524bbce3-d935-4b6e-b3c0-243625de9015" />
-<img width="1154" height="867" alt="image" src="https://github.com/user-attachments/assets/809b8256-44a3-46df-9ea0-adbdc661609f" />
+<img width="1297" height="926" alt="image" src="https://github.com/user-attachments/assets/e1bebe7a-347e-4209-be2d-6b7ce7b2a585" />
+
 
 
 
@@ -19,16 +21,14 @@ Actuellement 12 algorithmes de tris sont implémentés.
 * config.json permet la configuration de la fenêtre d'affichage et des CSV ( emplacement et séparateur )
 * tri.py en charge de l'implémentation des tris et du renvoi des résultats
 * gestion_csv.py : crée les fichiers CSV, ajoute les données dans les CSV et récupère les données en les convertissant au bon format
-* analyse.py
-    * interface utilisateur
-    * effectue les calculs nécéssaires aux tracés de la courbe
-    * trace les courbes
+* graphique.py en charge du tracer des graphiques
+* interface.py en charge de l'interface de selection des tri et du lancement de ceux-ci
         
 
 Le TEMPS_THEORIQUE_PAR_OPERATION est le temps moyen utiliser pour faire un échange dans un tableau. Déterminer en faisant le moyenne de temps de dizaines de milliers d'échanges.
 
 ## Utilisation : 
-Il faut cloner le répertoire et lancer analyse.py
+Il faut cloner le répertoire et lancer l'exécution depuis main.py
 
 ## Exemple d'utilisation : 
 Sélectionner les tris souhaités,
@@ -39,9 +39,8 @@ Sélectionner les tris souhaités,
 
 ## Amélioration à venir :
 
-* Limiter le nombre de points sur le graphe ( maximum 1 point tous les 3 pixels )
-* Pouvoir choisir quelle courbe afficher et quelle coubre cacher sur le graphe
-* Diviser les fonctionnalités de analyse.py
+* Travailler l'interface
+* Configuration en direct du nombre de points sur la courbe
 
 ## Bonus :
 Le dossier affichage contient le programme de visualisation des tris, il est indépendant du reste
